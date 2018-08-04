@@ -1,6 +1,4 @@
-#!/usr/bin/env nix-shell
-#!ruby # Hack for ruby parsing shebangs.
-#!nix-shell -p ruby -i ruby
+#!/usr/bin/env ruby
 
 require "pp"
 require "json"
