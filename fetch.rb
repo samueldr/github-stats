@@ -7,7 +7,7 @@ require "json"
 filename = ARGV.first
 
 client = Octokit::Client.new(
-	access_token: "77c2f8d1d5b449d1fad189002cb8c7d39f745694",
+	access_token: GITHUB_TOKEN,
 	per_page: 100,
 )
 
