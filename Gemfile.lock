@@ -5,6 +5,8 @@ GEM
       public_suffix (>= 2.0.2, < 4.0)
     faraday (0.15.2)
       multipart-post (>= 1.2, < 3)
+    faraday-http-cache (2.0.0)
+      faraday (~> 0.8)
     multipart-post (2.0.0)
     octokit (4.9.0)
       sawyer (~> 0.8.0, >= 0.5.3)
@@ -18,6 +20,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  faraday-http-cache
   octokit (~> 4.0)
   sqlite3
 

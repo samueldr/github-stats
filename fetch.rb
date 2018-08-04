@@ -2,17 +2,25 @@
 
 require_relative "secrets"
 require_relative "db"
+require "faraday-http-cache"
 require "octokit"
 require "pp"
 require "json"
 
-filename = ARGV.first
+# https://github.com/octokit/octokit.rb#caching
+# Tries to reduce issues with rate limits.
+stack = Faraday::RackBuilder.new do |builder|
+  builder.use Faraday::HttpCache, serializer: Marshal, shared_cache: false
+  builder.use Octokit::Response::RaiseError
+  builder.adapter Faraday.default_adapter
+end
+Octokit.middleware = stack
 
 $client = Octokit::Client.new(
 	access_token: GITHUB_TOKEN,
 	per_page: 100,
 )
-
+$client.middleware = stack
 user = $client.user
 user.login
 

@@ -2,5 +2,6 @@
 source "https://rubygems.org"
 
 gem "octokit", "~> 4.0"
+gem "faraday-http-cache"
 #gem "gruff"
 gem "sqlite3"
