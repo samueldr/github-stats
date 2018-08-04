@@ -6,6 +6,8 @@ require "octokit"
 require "pp"
 require "json"
 
+filename = ARGV.first
+
 client = Octokit::Client.new(
 	access_token: "77c2f8d1d5b449d1fad189002cb8c7d39f745694",
 	per_page: 100,
@@ -17,7 +19,7 @@ user.login
 client.auto_paginate = true
 pulls = client.pulls("nixos/nixpkgs", state: "all")
 
-File.open("pulls.json", "w") do |file|
+File.open(filename, "w") do |file|
 	file.write(
 		JSON.generate(
 			pulls.map do |pull|

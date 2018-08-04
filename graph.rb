@@ -5,11 +5,13 @@
 require "pp"
 require "json"
 
+filename = ARGV.first
+
 def parse_date(date)
 	date.split(" ").first
 end
 
-pulls = JSON.parse(File.read("pulls.json"))
+pulls = JSON.parse(File.read(filename))
 
 first_date = pulls.first["created_at"]
 last_date = pulls.last["created_at"]
