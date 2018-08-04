@@ -27,9 +27,12 @@ user.login
 puts "Starting..."
 #$client.auto_paginate = true
 
+# https://developer.github.com/v3/pulls/#list-pull-requests
 $client.pulls(
   "nixos/nixpkgs",
   state: "all",
+  sort: "updated",
+  direction: "desc",
   # page: 30,
 )
 last_response = $client.last_response
