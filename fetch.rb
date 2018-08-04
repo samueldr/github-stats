@@ -47,6 +47,8 @@ loop do
   end
 
   break unless last_response.rels[:next]
+  # FIXME : if rate limit exceeded, check headers and wait
+  # https://developer.github.com/v3/#rate-limiting
   puts "Next: #{last_response.rels[:next].href}"
   last_response = last_response.rels[:next].get
 end
