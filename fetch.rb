@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require "bundler/setup"
 require_relative "secrets"
 require_relative "db"
 require "faraday-http-cache"

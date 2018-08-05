@@ -44,4 +44,12 @@ module DB
     data[:committer_id] = data[:committer][:id] if data[:committer]
     _insert(:pull_commits, data, :pull_number, :sha, :author_id, :committer_id,)
   end
+
+  # Re-hydrates all the pull requests.
+  # TODO : parameters
+  def pulls()
+    $db.execute("SELECT data FROM pulls").map do |(data)|
+      JSON.parse(data, symbolize_names: true)
+    end
+  end
 end
