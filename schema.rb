@@ -90,11 +90,11 @@ def migration(name, sql)
     $db.transaction
     $db.execute("INSERT INTO migrations (name) VALUES(?)", name)
     $db.execute_batch(sql)
-    yield
+    yield if block_given?
     $db.commit
 
     puts "Finished migration #{name}"
-  rescue e 
+  rescue Exception => e 
     puts "Exception occurred"
     puts e
     $db.rollback
@@ -124,3 +124,9 @@ migration("2018-08-05-pull_commits_add_raw_body", "
     $db.execute("UPDATE pull_commits SET raw_body = ? WHERE sha = ?", pull[:commit][:message], sha)
   end
 end
+
+migration("2018-08-05-pull_commits_add_raw_body_index", "
+  CREATE INDEX pull_commits_raw_body
+  ON pull_commits (raw_body)
+  ;
+")
