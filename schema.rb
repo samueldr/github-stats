@@ -84,21 +84,21 @@ def migration(name, sql)
   applied_migrations = $db.execute("SELECT name, date FROM migrations").to_h
   return if applied_migrations[name.to_s]
 
-  puts "Doing migration #{name}"
-
   begin
+    puts "Doing migration #{name}"
+
     $db.transaction
     $db.execute("INSERT INTO migrations (name) VALUES(?)", name)
     $db.execute_batch(sql)
     yield
     $db.commit
-  rescue SQLite3::Exception => e 
+
+    puts "Finished migration #{name}"
+  rescue e 
     puts "Exception occurred"
     puts e
     $db.rollback
   end
-
-  puts "Finished migration #{name}"
 end
 
 migration("2018-08-05-add_merge_commit_sha", "
@@ -110,5 +110,17 @@ migration("2018-08-05-add_merge_commit_sha", "
     puts " Migrating record #{id}"
     pull = JSON.parse(data, symbolize_names: true)
     $db.execute("UPDATE pulls SET merge_commit_sha = ? WHERE id = ?", pull[:merge_commit_sha], id)
+  end
+end
+
+migration("2018-08-05-pull_commits_add_raw_body", "
+  ALTER TABLE pull_commits
+  ADD COLUMN raw_body TEXT
+  ;
+") do
+  $db.execute("SELECT sha, data FROM pull_commits") do |sha, data|
+    puts " Migrating record #{sha}"
+    pull = JSON.parse(data, symbolize_names: true)
+    $db.execute("UPDATE pull_commits SET raw_body = ? WHERE sha = ?", pull[:commit][:message], sha)
   end
 end
