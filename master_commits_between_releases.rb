@@ -7,10 +7,6 @@ require "pp"
 
 pull_commits = $db.execute("SELECT sha FROM pull_commits;").map { |row| row.first }
 
-# Eww, but they aren't cached yet
-merge_commit_shas = DB.pulls.map do |pull|
-  pull[:merge_commit_sha]
-end.select { |x| !!x }
 
 pull_commits.concat(merge_commit_shas)
 
@@ -18,6 +14,9 @@ pull_commits.concat(merge_commit_shas)
 # I hate to hardcode this, but I want to work in this project's CWD.
 # May instead look for an environment variable or config file.
 REPO_LOCATION = File.join(ENV["HOME"], "tmp", "nixpkgs", "nixpkgs")
+merge_commit_shas = $db.execute("SELECT merge_commit_sha FROM pulls WHERE merge_commit_sha NOT NULL").map(&:first)
+
+pull_commits.concat(merge_commit_shas)
 
 def last_on_master(rel)
   Dir.chdir(REPO_LOCATION) do
