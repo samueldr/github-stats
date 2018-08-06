@@ -21,10 +21,22 @@ module DB
   def replace_pull(data)
     data = data.to_hash
     data[:author_id] = data[:user][:id]
-    data[:merger_id] = data[:merged_by][:id] if data[:merged_by]
+    data[:created_at] = data[:created_at].to_s
+    data[:updated_at] = data[:updated_at].to_s
     DB.replace_user(data[:user])
     DB.replace_user(data[:merged_by]) if data[:merged_by]
-    _insert(:pulls, data, :id, :number, :state, :author_id, :merger_id)
+    _insert(
+      :pulls,
+      data,
+      :id,
+      :number,
+      :state,
+      :author_id,
+      :merge_commit_sha,
+      :title,
+      :created_at,
+      :updated_at,
+    )
   end
 
   # Insert or replace user
@@ -39,16 +51,22 @@ module DB
     replace_user(data[:author]) if data[:author]
     replace_user(data[:committer]) if data[:committer]
     data = data.to_hash
+    data[:raw_body] = data[:commit][:message]
     data[:pull_number] = pull_number
     data[:author_id] = data[:author][:id] if data[:author]
     data[:committer_id] = data[:committer][:id] if data[:committer]
-    _insert(:pull_commits, data, :pull_number, :sha, :author_id, :committer_id,)
+    _insert(:pull_commits, data, :pull_number, :sha, :author_id, :committer_id, :raw_body)
   end
 
   # Re-hydrates all the pull requests.
   # TODO : parameters
   def pulls(where = "")
     $db.execute("SELECT data FROM pulls #{where}").map do |(data)|
+      JSON.parse(data, symbolize_names: true)
+    end
+  end
+  def pull_commits(where = "")
+    $db.execute("SELECT data FROM pull_commits #{where}").map do |(data)|
       JSON.parse(data, symbolize_names: true)
     end
   end
