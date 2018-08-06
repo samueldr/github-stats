@@ -96,7 +96,7 @@ def migration(name, sql)
     puts "Finished migration #{name}"
   rescue Exception => e 
     puts "Exception occurred"
-    puts e
+    pp e
     $db.rollback
   end
 end
@@ -130,3 +130,35 @@ migration("2018-08-05-pull_commits_add_raw_body_index", "
   ON pull_commits (raw_body)
   ;
 ")
+
+migration("2018-08-05-pulls_add_title", "
+  ALTER TABLE pulls
+  ADD COLUMN title TEXT
+  ;
+") do
+  $db.execute("SELECT id, data FROM pulls") do |id, data|
+    puts " Migrating record #{id}"
+    pull = JSON.parse(data, symbolize_names: true)
+    $db.execute("UPDATE pulls SET title = ? WHERE id = ?", pull[:title], id)
+  end
+end
+
+migration("2018-08-05-pulls_add_dates", "
+  ALTER TABLE pulls
+  ADD COLUMN created_at TEXT
+  ;
+  ALTER TABLE pulls
+  ADD COLUMN updated_at TEXT
+  ;
+") do
+  $db.execute("SELECT id, data FROM pulls") do |id, data|
+    puts " Migrating record #{id}"
+    pull = JSON.parse(data, symbolize_names: true)
+    $db.execute("
+                  UPDATE pulls SET
+                    created_at = ?,
+                    updated_at = ?
+                  WHERE id = ?
+                ", pull[:created_at], pull[:updated_at], id)
+  end
+end
