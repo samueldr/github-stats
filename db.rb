@@ -60,13 +60,13 @@ module DB
 
   # Re-hydrates all the pull requests.
   # TODO : parameters
-  def pulls(where = "")
-    $db.execute("SELECT data FROM pulls #{where}").map do |(data)|
+  def pulls(where = "", *params)
+    $db.execute("SELECT data FROM pulls #{where}", *params).map do |(data)|
       JSON.parse(data, symbolize_names: true)
     end
   end
-  def pull_commits(where = "")
-    $db.execute("SELECT data FROM pull_commits #{where}").map do |(data)|
+  def pull_commits(where = "", *params)
+    $db.execute("SELECT data FROM pull_commits #{where}", *params).map do |(data)|
       JSON.parse(data, symbolize_names: true)
     end
   end
