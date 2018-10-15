@@ -1,73 +1,117 @@
 #!/usr/bin/env ruby
 
-require "bundler/setup"
-require_relative "secrets"
-require_relative "db"
-require "faraday-http-cache"
-require "octokit"
-require "pp"
-require "json"
+#
+# Big hacky script that will cache locally the nixpkgs pull requests listing.
+#
+# It can refresh modified pull requests if given `--update` as a parameter.
+#
 
-# https://github.com/octokit/octokit.rb#caching
-# Tries to reduce issues with rate limits.
-stack = Faraday::RackBuilder.new do |builder|
-  builder.use Faraday::HttpCache, serializer: Marshal, shared_cache: false
-  builder.use Octokit::Response::RaiseError
-  builder.adapter Faraday.default_adapter
+require "bundler/setup"    # Using bundler
+require "octokit"          # GitHub API helper
+require_relative "secrets" # Sneaky trick!
+require_relative "db"      #
+
+# FIXME : more clever arguments parsing.
+$only_update = ARGV.first == "--update"
+
+# This is pretty hardcoded; nothing in the cache will
+# work with more than one repository.
+REPO = "NixOS/nixpkgs"
+
+# Debug print
+def dbgp(*args)
+  puts [" [D]", *args].join(" ")
 end
-Octokit.middleware = stack
 
+# Helper function, given a block, it will pause its execution until
+# it is possible to do the request.
+def work()
+  # FIXME : .rel[...].get doesn't update $client.rate_limit...
+
+  rate_limit = $client.rate_limit
+  dbgp "#{rate_limit.remaining} API calls left."
+
+  # A little buffer in case we use a feature from octokit
+  # which doesn't update rate_limit on `$client`.
+  if rate_limit.remaining < 5 then
+    reset = rate_limit.resets_in + 10
+    puts "💤 zleepy timez (back in #{reset} seconds)"
+    sleep(reset)
+  end
+
+  yield
+end
+
+# Oh eww, a global variable!
+# Did I say this is a hack?
 $client = Octokit::Client.new(
 	access_token: GITHUB_TOKEN,
 	per_page: 100,
 )
-$client.middleware = stack
-user = $client.user
-user.login
 
-puts "Starting..."
-#$client.auto_paginate = true
+puts "Logging-in..."
+work { $client.user.login }
 
+params = {
+  # All results (closed AND open)
+  state: "all",
+}
 
-latest_update = $db.execute("SELECT updated_at FROM pulls ORDER BY updated_at DESC LIMIT 1").first.first
+if $only_update then
+  # Find when the last update was written.
+  latest_update = $db
+    .execute("SELECT updated_at FROM pulls ORDER BY updated_at DESC LIMIT 1")
+    &.first&.first
+  params[:direction] = "desc"
+  params[:sort] = "updated"
+else
+  # When filling from the beginning, it is safer to work from the older to the
+  # newer; things won't shift into pages.
+  params[:direction] = "asc"
+end
 
 # https://developer.github.com/v3/pulls/#list-pull-requests
-$client.pulls(
-  "nixos/nixpkgs",
-  state: "all",
-  sort: "updated",
-  direction: "desc",
-  # page: 30,
-)
-last_response = $client.last_response
+# Start querying for stuff!
+puts "Starting..."
+work { $client.pulls(REPO, **params) }
+
+# Work variable. This is used to page through results.
+current_results = $client.last_response
+continue = true
+
 loop do
-  pulls = last_response.data
-  puts "Mapping pull requests"
-  pulls.map do |pull|
+  # Mapping through PRs.
+  current_results.data.map do |pull|
     number = pull[:number]
     puts "Doing PR ##{number}"
 
     DB.replace_pull(pull)
-    $client.get(pull.commits_url).map do |commit|
+    work {$client.get(pull.commits_url)}.map do |commit|
       DB.replace_commit(number, commit)
     end
 
-    # FIXME : argument parsing
     # This is a bit "dangerous" as with a failed partial refresh it would leave
     # a new "updated_at" value with a gap in the data.
     # The real solution is to instead reverse the direction (asc) and limit the
     # search query using >= latest_update
-    if ARGV.first == "--update" then
-      if pull[:updated_at].to_s < latest_update then
-        puts "Finished with updates..."
-        exit 0
+    if $only_update then
+      if latest_update and pull[:updated_at].to_s < latest_update then
+        puts "Finished with the partial update..."
+        continue = false
+        break
       end
     end
   end
 
-  break unless last_response.rels[:next]
-  # FIXME : if rate limit exceeded, check headers and wait
-  # https://developer.github.com/v3/#rate-limiting
-  puts "Next: #{last_response.rels[:next].href}"
-  last_response = last_response.rels[:next].get
+  # Breaking from the previous loop?
+  break unless continue
+
+  # At the end of the results set? yay! no need to work any further.
+  break unless current_results.rels[:next]
+
+  puts "Next: #{current_results.rels[:next].href}"
+  current_results = work { current_results.rels[:next].get }
 end
+
+puts ""
+puts " 🎉  All done!"
