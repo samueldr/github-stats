@@ -1,3 +1,4 @@
+vendor/bundler
 vendor/bundle
 .bundle/config
 secrets.rb
