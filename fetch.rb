@@ -20,7 +20,7 @@ REPO = "NixOS/nixpkgs"
 
 # Debug print
 def dbgp(*args)
-  puts [" [D]", *args].join(" ")
+  #puts [" [D]", *args].join(" ")
 end
 
 # Helper function, given a block, it will pause its execution until
