@@ -162,3 +162,17 @@ migration("2018-08-05-pulls_add_dates", "
                 ", pull[:created_at], pull[:updated_at], id)
   end
 end
+
+migration("2018-10-15-add-issues", "
+  CREATE TABLE issues (
+    id INTEGER NOT NULL PRIMARY KEY,      -- github ID, not the issue #
+    number INTEGER NOT NULL,              -- the issue #
+    state TEXT NOT NULL,                  -- open, closed, merged
+    author_id INTEGER NOT NULL,           -- github ID of who opened it
+    closed_by_id INTEGER,                 -- github ID of who merged it
+    data TEXT NOT NULL,                   -- json dump from API; may include foreign fields.
+    title TEXT,
+    created_at TEXT,
+    updated_at TEXT
+  );
+")
