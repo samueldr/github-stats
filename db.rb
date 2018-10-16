@@ -23,6 +23,7 @@ module DB
     data[:author_id] = data[:user][:id]
     data[:created_at] = data[:created_at].to_s
     data[:updated_at] = data[:updated_at].to_s
+    data[:merger_id] = data[:merged_by][:id] if data[:merged_by]
     DB.replace_user(data[:user])
     DB.replace_user(data[:merged_by]) if data[:merged_by]
     _insert(
@@ -36,6 +37,36 @@ module DB
       :title,
       :created_at,
       :updated_at,
+    )
+  end
+
+  def replace_issue(data)
+    data = data.to_hash
+    data[:author_id] = data[:user][:id]
+    data[:closed_by_id] = data[:closed_by][:id] if data[:closed_by]
+    data[:created_at] = data[:created_at].to_s
+    data[:updated_at] = data[:updated_at].to_s
+    DB.replace_user(data[:user])
+    DB.replace_user(data[:assignee]) if data[:assignee]
+    DB.replace_user(data[:closed_by]) if data[:closed_by]
+
+    if data[:assignees] then
+      data[:assignees].each do |assignee|
+        DB.replace_user(assignee)
+      end
+    end
+    DB.replace_user(data[:user])
+    _insert(
+      :issues,
+      data,
+      :id,
+      :number,
+      :state,
+      :author_id,
+      :title,
+      :created_at,
+      :updated_at,
+      :closed_by_id,
     )
   end
 
