@@ -83,7 +83,7 @@ loop do
   # Mapping through PRs.
   current_results.data.map do |pull|
     number = pull[:number]
-    puts "Doing PR ##{number}"
+    puts "Saving PR ##{number}"
 
     DB.replace_pull(pull)
     work {$client.get(pull.commits_url)}.map do |commit|
