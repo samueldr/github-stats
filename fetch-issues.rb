@@ -68,7 +68,6 @@ work { $client.user.login }
 params = {
   # All results (closed AND open)
   state: "all",
-  page: 70,
 }
 
 if $only_update then
