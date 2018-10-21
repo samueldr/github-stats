@@ -96,8 +96,15 @@ module DB
       JSON.parse(data, symbolize_names: true)
     end
   end
+
   def pull_commits(where = "", *params)
     $db.execute("SELECT data FROM pull_commits #{where}", *params).map do |(data)|
+      JSON.parse(data, symbolize_names: true)
+    end
+  end
+
+  def issues(where = "", *params)
+    $db.execute("SELECT data FROM issues #{where}", *params).map do |(data)|
       JSON.parse(data, symbolize_names: true)
     end
   end
