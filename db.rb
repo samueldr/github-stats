@@ -24,6 +24,7 @@ module DB
     data[:created_at] = data[:created_at].to_s
     data[:updated_at] = data[:updated_at].to_s
     data[:merged_at] = data[:merged_at].to_s
+    data[:base] = data[:base][:ref].to_s
     # Uh, this is now gone from the data set :(
     data[:merger_id] = data[:merged_by][:id] if data[:merged_by]
     DB.replace_user(data[:user])

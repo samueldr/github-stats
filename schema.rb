@@ -192,3 +192,19 @@ migration("2020-02-05-pulls-add-merged-field", "
                 ", pull[:merged_at], id)
   end
 end
+
+migration("2020-02-05-pulls-add-base-field", "
+  ALTER TABLE pulls
+  ADD COLUMN base TEXT
+  ;
+") do
+  $db.execute("SELECT id, data FROM pulls") do |id, data|
+    puts " Migrating record #{id}"
+    pull = JSON.parse(data, symbolize_names: true)
+    $db.execute("
+                  UPDATE pulls SET
+                    base = ?
+                  WHERE id = ?
+                ", pull[:base][:ref], id)
+  end
+end
