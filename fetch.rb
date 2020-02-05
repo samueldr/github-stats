@@ -35,11 +35,20 @@ def work()
   # which doesn't update rate_limit on `$client`.
   if rate_limit.remaining < 5 then
     reset = rate_limit.resets_in + 10
-    puts "💤 zleepy timez (back in #{reset} seconds)"
+    puts " 💤 zleepy timez (back in #{reset} seconds)"
+    puts "   That's about #{reset/60} minutes!"
     sleep(reset)
   end
 
-  yield
+  begin
+    yield
+  rescue Octokit::BadGateway => e
+    $stderr.puts " 🤮 Oopsie doozie, github is a bit whoozie..."
+    $stderr.puts " 💊 Let's let the hub of the git snooze a bit."
+    $stderr.puts " 😴 (sleep 10)"
+    sleep 10
+    retry
+  end
 end
 
 # Oh eww, a global variable!
@@ -109,7 +118,7 @@ loop do
   # At the end of the results set? yay! no need to work any further.
   break unless current_results.rels[:next]
 
-  puts "Next: #{current_results.rels[:next].href}"
+  puts " ➡️ Next: #{current_results.rels[:next].href}"
   current_results = work { current_results.rels[:next].get }
 end
 
