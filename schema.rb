@@ -176,3 +176,19 @@ migration("2018-10-15-add-issues", "
     updated_at TEXT
   );
 ")
+
+migration("2020-02-05-pulls-add-merged-field", "
+  ALTER TABLE pulls
+  ADD COLUMN merged_at TEXT
+  ;
+") do
+  $db.execute("SELECT id, data FROM pulls") do |id, data|
+    puts " Migrating record #{id}"
+    pull = JSON.parse(data, symbolize_names: true)
+    $db.execute("
+                  UPDATE pulls SET
+                    merged_at = ?
+                  WHERE id = ?
+                ", pull[:merged_at], id)
+  end
+end
