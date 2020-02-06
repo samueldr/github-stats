@@ -3,3 +3,4 @@ vendor/bundle
 .bundle/config
 secrets.rb
 cache.db
+*.db
