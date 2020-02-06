@@ -42,7 +42,7 @@ def work()
 
   begin
     yield
-  rescue Octokit::BadGateway => e
+  rescue Octokit::InternalServerError, Octokit::BadGateway => e
     $stderr.puts " 🤮 Oopsie doozie, github is a bit whoozie..."
     $stderr.puts " 💊 Let's let the hub of the git snooze a bit."
     $stderr.puts " 😴 (sleep 10)"
