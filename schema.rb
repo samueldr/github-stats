@@ -208,3 +208,11 @@ migration("2020-02-05-pulls-add-base-field", "
                 ", pull[:base][:ref], id)
   end
 end
+
+migration("2020-02-12-pulls_commits-add-diff-field", "
+  ALTER TABLE pull_commits
+  ADD COLUMN diff TEXT
+  ;
+") do
+  # Do not auto-fill...
+end
