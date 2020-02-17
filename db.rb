@@ -44,6 +44,14 @@ module DB
     )
   end
 
+  def update_diff(sha, diff)
+    $db.execute(
+      "UPDATE pull_commits SET diff = ? WHERE sha = ?",
+      diff,
+      sha,
+    )
+  end
+
   def replace_issue(data)
     data = data.to_hash
     data[:author_id] = data[:user][:id]
