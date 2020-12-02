@@ -39,7 +39,20 @@ def work()
     sleep(reset)
   end
 
-  yield
+  begin
+    yield
+  rescue Octokit::BadGateway, Octokit::InternalServerError => e
+    puts "Uuuh... github is having a bad time 🤢 #{e.response_status}"
+    pp "====="
+    pp "====="
+    pp e.response_body
+    pp "====="
+    pp e.response_headers
+    pp "====="
+    pp "====="
+    sleep 10
+    retry
+  end
 end
 
 # Oh eww, a global variable!
@@ -55,6 +68,8 @@ work { $client.user.login }
 params = {
   # All results (closed AND open)
   state: "all",
+  # Need to restart an initial import? edit this:
+  #page: 485,
 }
 
 if $only_update then
